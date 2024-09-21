@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Amazon Product Search</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+</head>
+<body class="container">
+    <h1 class="mt-5">Search Amazon Products</h1>
+    <form method="post" class="form-inline my-4">
+        <input type="text" name="query" class="form-control mr-2" placeholder="Enter your search term" value="{{ query or '' }}" required>
+        <input type="number" name="num_results" class="form-control mr-2" value="{{ num_results or 3 }}" min="1">
+        <input type="submit" value="Search" class="btn btn-primary">
+    </form>
+
+    {% if results is defined %}
+        <h2>Results for "{{ query }}"</h2>
+        {% if results.empty %}
+            <p>No results found.</p>
+        {% else %}
+            <table class="table table-striped">
+                <thead>
+                    <tr>
+                        <th>Product Name</th>
+                        <th>Order Date</th>
+                        <th>Category</th>
+                        <th>Unit Price</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for index, row in results.iterrows() %}
+                    <tr>
+                        <td>
+                            <a href="https://www.amazon.com/dp/{{ row['ASIN'] }}" target="_blank">{{ row['Product Name'] }}</a>
+                        </td>     
+                        <td>{{ row['Order Date'] }}</td>                   
+                        <td>{{ row['Category'] }}</td>
+                        <td>${{ "{:.2f}".format(row['Unit Price']) }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        {% endif %}
+    {% endif %}
+</body>
+</html>

@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Search Results</title>
+</head>
+<body>
+    <h1>Results for "{{ query }}"</h1>
+    <a href="/">Back to Search</a>
+    <table border="1">
+        <tr>
+            <th>Product Name</th>
+            <th>Order Date</th>
+            <th>ASIN</th>
+            <th>Category</th>
+            <th>Unit Price</th>
+        </tr>
+        {% for index, row in results.iterrows() %}
+        <tr>
+            <td>{{ row['Product Name'] }}</td>
+            <td>{{ row['Order Date'] }}</td>
+            <td>{{ row['ASIN'] }}</td>
+            <td>{{ row['Category'] }}</td>
+            <td>{{ row['Unit Price'] }}</td>
+        </tr>
+        {% endfor %}
+    </table>
+</body>
+</html>
