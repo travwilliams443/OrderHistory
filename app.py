@@ -9,6 +9,7 @@ from langchain_openai import OpenAIEmbeddings
 from langchain_core.documents import Document
 from uuid import uuid4
 import hashlib
+from datetime import datetime
 
 app = Flask(__name__)
 
@@ -24,40 +25,75 @@ vector_store = Chroma(
 
 def query_orders(text, num_results=1):
     try:
-        results = vector_store.similarity_search(
+        # Use similarity_search_with_score to get documents and their scores
+        results_with_scores = vector_store.similarity_search_with_score(
             text,
             k=num_results,
         )
     except Exception as e:
         # Log the exception if necessary
-        results = []
+        results_with_scores = []
 
     data = []
 
-    for res in results:
+    for res, score in results_with_scores:
+        # Process Order Date
+        order_date_str = res.metadata.get('Order Date')
+        if order_date_str:
+            try:
+                # Convert to datetime object
+                order_date = datetime.fromisoformat(order_date_str)
+                # Format date for display
+                order_date_formatted = order_date.strftime('%Y-%m-%d')
+            except Exception:
+                order_date = None
+                order_date_formatted = order_date_str
+        else:
+            order_date = None
+            order_date_formatted = None
+
         data.append({
             "Product Description": res.page_content,
-            "Order Date": res.metadata.get('Order Date'),
+            "Order Date": order_date_formatted,
+            "Order Date Datetime": order_date,
             "Product Name": res.metadata.get('Product Name'),
             "Unit Price": res.metadata.get('Unit Price'),
             "Category": res.metadata.get('Category'),
             "ASIN": res.metadata.get('ASIN'),
+            "Similarity Score": score
         })
 
     df_results = pd.DataFrame(data)
-    return df_results
 
+    return df_results
 
 @app.route('/', methods=['GET', 'POST'])
 def index():
     if request.method == 'POST':
         query_text = request.form['query']
         num_results = int(request.form.get('num_results', 3))
-        results_df = query_orders(query_text, num_results)
-        return render_template('index.html', query=query_text, results=results_df, num_results=num_results)
+        sort_by = request.form.get('sort_by', 'similarity')
+        try:
+            results_df = query_orders(query_text, num_results, sort_by=sort_by)
+            return render_template(
+                'index.html',
+                query=query_text,
+                results=results_df,
+                num_results=num_results,
+                sort_by=sort_by
+            )
+        except Exception as e:
+            error_message = f"An error occurred: {str(e)}"
+            return render_template(
+                'index.html',
+                query=query_text,
+                error_message=error_message,
+                num_results=num_results,
+                sort_by=sort_by
+            )
     else:
         return render_template('index.html')
-    
+
 
 if __name__ == '__main__':
     app.run(debug=True)
