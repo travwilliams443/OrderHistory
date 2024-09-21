@@ -23,7 +23,7 @@ vector_store = Chroma(
     embedding_function=openai_embedding
 )
 
-def query_orders(text, num_results=1):
+def query_orders(text, num_results=1, sort_by='similarity'):
     try:
         # Use similarity_search_with_score to get documents and their scores
         results_with_scores = vector_store.similarity_search_with_score(
